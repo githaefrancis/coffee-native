@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArticleCard from "@/components/ArticleCard";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -10,12 +10,20 @@ import cultivationImg from "@/assets/article-cultivation.jpg";
 import stewardshipImg from "@/assets/article-stewardship.jpg";
 import characterImg from "@/assets/article-character.jpg";
 import heroImage from "@/assets/hero-coffee-farm.jpg";
+import { client } from "@/sanity/client";
+import { type SanityDocument } from "@sanity/client";
+
+const ARTICLES_QUERY = `
+*[_type == "article"]{_id, title, slug, date, content, image, category, excerpt}
+`;
 
 const allArticles = [
   {
     slug: "harvest-timer",
-    title: "The Harvest Timer: What Coffee Cherries Taught Me About Exit Strategies",
-    excerpt: "Picking too early leaves value on the branch. Waiting too long spoils the returns. After thirty years, I've learned the signs.",
+    title:
+      "The Harvest Timer: What Coffee Cherries Taught Me About Exit Strategies",
+    excerpt:
+      "Picking too early leaves value on the branch. Waiting too long spoils the returns. After thirty years, I've learned the signs.",
     category: "Stewardship",
     readTime: 8,
     image: heroImage,
@@ -24,7 +32,8 @@ const allArticles = [
   {
     slug: "punctuality-respect",
     title: "Punctuality Isn't Performance—It's Respect",
-    excerpt: "Everyone talks about 'hustle culture.' I've been up at 4 AM for thirty years, not because a guru told me to, but because coffee cherries don't care about your schedule.",
+    excerpt:
+      "Everyone talks about 'hustle culture.' I've been up at 4 AM for thirty years, not because a guru told me to, but because coffee cherries don't care about your schedule.",
     category: "Character",
     readTime: 6,
     image: characterImg,
@@ -33,7 +42,8 @@ const allArticles = [
   {
     slug: "fair-trade-integrity",
     title: "Fair Trade and the Long Game",
-    excerpt: "The integrity required in fair trade isn't about certification badges—it's about looking farmers in the eye year after year and keeping your word when no one's watching.",
+    excerpt:
+      "The integrity required in fair trade isn't about certification badges—it's about looking farmers in the eye year after year and keeping your word when no one's watching.",
     category: "Governance",
     readTime: 10,
     image: governanceImg,
@@ -42,7 +52,8 @@ const allArticles = [
   {
     slug: "soil-patience",
     title: "Soil Work: The Patient Investment",
-    excerpt: "Building soil health takes years. Destroying it takes one season of shortcuts. Portfolio management follows the same truth.",
+    excerpt:
+      "Building soil health takes years. Destroying it takes one season of shortcuts. Portfolio management follows the same truth.",
     category: "Cultivation",
     readTime: 7,
     image: cultivationImg,
@@ -53,10 +64,27 @@ const allArticles = [
 const Archive = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedField, setSelectedField] = useState<string | null>(null);
+  const [articles, setArticles] = useState([]);
+
+  const fetchArticles = useCallback(async () => {
+    try {
+      const fetchedArticles = await client.fetch<SanityDocument[]>(
+        ARTICLES_QUERY,
+        {}
+      );
+      setArticles(fetchedArticles);
+    } catch (err) {
+      console.log("failed");
+    }
+  }, []);
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   const filteredArticles = allArticles.filter((article) => {
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesField = !selectedField || article.category === selectedField;
     return matchesSearch && matchesField;
   });
@@ -71,7 +99,9 @@ const Archive = () => {
       <section className="py-24 bg-charcoal text-paper">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
-            <h1 className="text-display font-serif font-bold mb-6">The Collection</h1>
+            <h1 className="text-display font-serif font-bold mb-6">
+              The Collection
+            </h1>
             <p className="text-2xl font-body text-paper-dark leading-relaxed">
               Essays on cultivation, stewardship, governance, and character—
               <br />
@@ -125,9 +155,9 @@ const Archive = () => {
       <section className="py-16">
         <div className="container mx-auto px-6">
           <div className="max-w-6xl mx-auto">
-            {filteredArticles.length > 0 ? (
+            {articles.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-8">
-                {filteredArticles.map((article, index) => (
+                {articles.map((article, index) => (
                   <div
                     key={article.slug}
                     className="animate-fade-in"

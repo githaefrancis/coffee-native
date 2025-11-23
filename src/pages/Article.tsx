@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Clock, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,12 +9,22 @@ import governanceImg from "@/assets/article-governance.jpg";
 import cultivationImg from "@/assets/article-cultivation.jpg";
 import stewardshipImg from "@/assets/article-stewardship.jpg";
 import characterImg from "@/assets/article-character.jpg";
+import { client } from "@/sanity/client";
+import { PortableText } from "@portabletext/react";
+import { type SanityDocument } from "@sanity/client";
+import { urlFor } from "../sanity/client";
+
+const ARTICLES_QUERY = `
+*[_type == "article" && slug.current ==$slug][0]{_id, title, slug, date, content, image, category, excerpt}
+`;
 
 // Sample article data
-const articles: Record<string, any> = {
-  "harvest-timer": {
-    title: "The Harvest Timer: What Coffee Cherries Taught Me About Exit Strategies",
-    subtitle: "Picking too early leaves value on the branch. Waiting too long spoils the returns.",
+const _articles: Record<string, any> = {
+  "the-harvest-timer-what-coffee-cherries-taught-me-about-exit-strategies": {
+    title:
+      "The Harvest Timer: What Coffee Cherries Taught Me About Exit Strategies",
+    subtitle:
+      "Picking too early leaves value on the branch. Waiting too long spoils the returns.",
     category: "Stewardship",
     readTime: 8,
     date: "Nov 18, 2025",
@@ -123,7 +133,8 @@ const articles: Record<string, any> = {
   },
   "punctuality-respect": {
     title: "Punctuality Isn't Performance—It's Respect",
-    subtitle: "Everyone talks about hustle culture. I've been up at 4 AM for thirty years.",
+    subtitle:
+      "Everyone talks about hustle culture. I've been up at 4 AM for thirty years.",
     category: "Character",
     readTime: 6,
     date: "Nov 12, 2025",
@@ -251,7 +262,24 @@ const articles: Record<string, any> = {
 const Article = () => {
   const { slug } = useParams<{ slug: string }>();
   const [readProgress, setReadProgress] = useState(0);
-  const article = slug ? articles[slug] : null;
+  // const article = slug ? _articles[slug] : null;
+
+  const [article, setArticle] = useState([]);
+
+  const fetchArticle = useCallback(async () => {
+    try {
+      const fetchedArticle = await client.fetch<SanityDocument[]>(
+        ARTICLES_QUERY,
+        { slug: slug }
+      );
+      setArticle(fetchedArticle);
+    } catch (err) {
+      console.log("failed");
+    }
+  }, []);
+  useEffect(() => {
+    fetchArticle();
+  }, [fetchArticle]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -274,7 +302,9 @@ const Article = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-serif font-bold mb-4">Essay Not Found</h1>
+          <h1 className="text-4xl font-serif font-bold mb-4">
+            Essay Not Found
+          </h1>
           <Link to="/" className="text-primary hover-underline">
             Return Home
           </Link>
@@ -284,10 +314,18 @@ const Article = () => {
   }
 
   const categoryColors: Record<string, string> = {
-    "Cultivation": "bg-forest text-paper",
-    "Stewardship": "bg-primary text-primary-foreground",
-    "Governance": "bg-burgundy text-paper",
-    "Character": "bg-sienna text-paper",
+    Cultivation: "bg-forest text-paper",
+    Stewardship: "bg-primary text-primary-foreground",
+    Governance: "bg-burgundy text-paper",
+    Character: "bg-sienna text-paper",
+  };
+
+  const components = {
+    block: {
+      blockquote: ({ children }) => (
+        <blockquote className="pull-quote">{children}</blockquote>
+      ),
+    },
   };
 
   return (
@@ -303,12 +341,12 @@ const Article = () => {
       {/* Hero Image */}
       <div className="relative h-[60vh] overflow-hidden">
         <img
-          src={article.image}
+          src={article.image ? urlFor(article.image).url() : ""}
           alt={article.title}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent" />
-        
+
         {/* Back Button */}
         <Link
           to="/"
@@ -343,7 +381,9 @@ const Article = () => {
           {/* Meta Information */}
           <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground font-sans border-y border-border py-6">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">By {article.author}</span>
+              <span className="font-medium text-foreground">
+                By {article.author}
+              </span>
             </div>
             <span>•</span>
             <div className="flex items-center gap-2">
@@ -365,37 +405,62 @@ const Article = () => {
         </header>
 
         {/* Article Body */}
-        <div className="prose max-w-none animate-fade-in" style={{ animationDelay: '200ms' }}>
-          {article.content.split('\n\n').map((paragraph: string, index: number) => {
-            if (paragraph.trim().startsWith('# ')) {
-              return (
-                <h2 key={index} className="text-heading font-serif font-bold mt-16 mb-6">
-                  {paragraph.replace('# ', '')}
-                </h2>
-              );
-            } else if (paragraph.trim().startsWith('> ')) {
-              return (
-                <blockquote key={index} className="pull-quote">
-                  {paragraph.replace('> ', '').replace(/"/g, '')}
-                </blockquote>
-              );
-            } else if (paragraph.trim().startsWith('**') && paragraph.trim().endsWith('**')) {
-              return (
-                <p key={index} className="text-xl font-medium my-8 text-charcoal">
-                  {paragraph.replace(/\*\*/g, '')}
-                </p>
-              );
-            } else if (paragraph.trim()) {
-              return (
-                <p key={index} className="mb-6 text-lg leading-relaxed">
-                  {paragraph.split('**').map((part, i) =>
-                    i % 2 === 1 ? <strong key={i} className="font-semibold text-charcoal">{part}</strong> : part
-                  )}
-                </p>
-              );
-            }
-            return null;
-          })}
+        <div
+          className="prose max-w-none animate-fade-in"
+          style={{ animationDelay: "200ms" }}
+        >
+          {article?.content && (
+            <PortableText value={article.content} components={components} />
+          )}
+          {
+            // article.content
+            //   .split("\n\n")
+            //   .map((paragraph: string, index: number) => {
+            //     if (paragraph.trim().startsWith("# ")) {
+            //       return (
+            //         <h2
+            //           key={index}
+            //           className="text-heading font-serif font-bold mt-16 mb-6"
+            //         >
+            //           {paragraph.replace("# ", "")}
+            //         </h2>
+            //       );
+            //     } else if (paragraph.trim().startsWith("> ")) {
+            //       return (
+            //         <blockquote key={index} className="pull-quote">
+            //           {paragraph.replace("> ", "").replace(/"/g, "")}
+            //         </blockquote>
+            //       );
+            //     } else if (
+            //       paragraph.trim().startsWith("**") &&
+            //       paragraph.trim().endsWith("**")
+            //     ) {
+            //       return (
+            //         <p
+            //           key={index}
+            //           className="text-xl font-medium my-8 text-charcoal"
+            //         >
+            //           {paragraph.replace(/\*\*/g, "")}
+            //         </p>
+            //       );
+            //     } else if (paragraph.trim()) {
+            //       return (
+            //         <p key={index} className="mb-6 text-lg leading-relaxed">
+            //           {paragraph.split("**").map((part, i) =>
+            //             i % 2 === 1 ? (
+            //               <strong key={i} className="font-semibold text-charcoal">
+            //                 {part}
+            //               </strong>
+            //             ) : (
+            //               part
+            //             )
+            //           )}
+            //         </p>
+            //       );
+            //     }
+            //     return null;
+            //   })
+          }
         </div>
 
         {/* Article Footer */}
@@ -403,7 +468,9 @@ const Article = () => {
           {/* Related Essays */}
           {article.relatedArticles && article.relatedArticles.length > 0 && (
             <div className="mb-12 animate-fade-in">
-              <h3 className="text-2xl font-serif font-semibold mb-6">Related Essays</h3>
+              <h3 className="text-2xl font-serif font-semibold mb-6">
+                Related Essays
+              </h3>
               <div className="grid md:grid-cols-2 gap-6">
                 {article.relatedArticles.map((related: any) => (
                   <Link
@@ -411,7 +478,9 @@ const Article = () => {
                     to={`/article/${related.slug}`}
                     className="group p-6 bg-muted hover:bg-card border border-border hover:border-primary/50 transition-all duration-300"
                   >
-                    <div className={`inline-block px-3 py-1 mb-3 text-xs font-sans font-medium tracking-wider uppercase ${categoryColors[related.category]}`}>
+                    <div
+                      className={`inline-block px-3 py-1 mb-3 text-xs font-sans font-medium tracking-wider uppercase ${categoryColors[related.category]}`}
+                    >
                       {related.category}
                     </div>
                     <h4 className="text-xl font-serif font-semibold group-hover:text-primary transition-colors">
@@ -436,7 +505,7 @@ const Article = () => {
                     Previous Essay
                   </div>
                   <div className="text-lg font-serif font-semibold">
-                    {articles[article.prevArticle]?.title}
+                    {_articles[article.prevArticle]?.title}
                   </div>
                 </div>
               </Link>
@@ -458,7 +527,7 @@ const Article = () => {
                     Next Essay
                   </div>
                   <div className="text-lg font-serif font-semibold">
-                    {articles[article.nextArticle]?.title}
+                    {_articles[article.nextArticle]?.title}
                   </div>
                 </div>
                 <ArrowRight className="h-6 w-6 text-gold group-hover:translate-x-2 transition-transform flex-shrink-0" />
@@ -475,7 +544,10 @@ const Article = () => {
           {/* Back to Home */}
           <div className="mt-12 text-center">
             <Link to="/" className="inline-block">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+              <Button
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
                 ← Return to The Collection
               </Button>
             </Link>

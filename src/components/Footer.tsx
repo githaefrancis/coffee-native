@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div>
             <h3 className="text-xl font-serif font-semibold mb-4 text-gold">
-              The Cultivated Mind
+              Coffee Native
             </h3>
             <p className="text-sm font-body text-paper-dark leading-relaxed">
               Earned wisdom from thirty years of coffee farming, 
@@ -40,7 +40,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          {/* <div>
             <h4 className="font-sans font-semibold mb-4 text-sm uppercase tracking-wider">
               Connect
             </h4>
@@ -61,7 +61,7 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           <div>
             <h4 className="font-sans font-semibold mb-4 text-sm uppercase tracking-wider">

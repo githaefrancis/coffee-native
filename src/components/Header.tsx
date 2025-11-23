@@ -11,38 +11,43 @@ const Header = () => {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="group">
-            <h1 className="text-2xl font-serif font-semibold tracking-tight text-charcoal hover-underline">
-              The Cultivated Mind
-            </h1>
+            <div className="flex flex-col hover-underline py-0.5">
+              <h1 className="text-3xl font-serif font-semibold tracking-tight text-primary">
+                Coffee Native
+              </h1>
+              <h1 className="text-sm  text-charcoal font-serif font-semibold tracking-tight pl-1">
+                the cultivated mind
+              </h1>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link 
-              to="/archive" 
+            <Link
+              to="/archive"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors hover-underline"
             >
               The Collection
             </Link>
-            <Link 
-              to="/fields" 
+            <Link
+              to="/fields"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors hover-underline"
             >
               The Four Fields
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors hover-underline"
             >
               About
             </Link>
-            <Button 
-              variant="outline" 
+            {/* <Button
+              variant="outline"
               size="sm"
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
             >
               Subscribe
-            </Button>
+            </Button> */}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -57,29 +62,29 @@ const Header = () => {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 flex flex-col gap-4 animate-fade-in">
-            <Link 
-              to="/archive" 
+            <Link
+              to="/archive"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               The Collection
             </Link>
-            <Link 
-              to="/fields" 
+            <Link
+              to="/fields"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               The Four Fields
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="text-sm font-sans font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               About
             </Link>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >

@@ -1,16 +1,40 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-coffee-farm.jpg";
+import { useCallback, useEffect, useState } from "react";
+import { type SanityDocument } from "@sanity/client";
+import { urlFor } from "../sanity/client";
+import { client } from "@/sanity/client";
+
+const FEATURED_ARTICLE_QUERY = `
+*[_type == "article" && featured==true][0]{_id, title, slug, date, content, image, category, excerpt, featured}
+`;
 
 const Hero = () => {
+  const [article, setArticle] = useState({});
+
+  const fetchArticle = useCallback(async () => {
+    try {
+      const fetchedArticle = await client.fetch<SanityDocument[]>(
+        FEATURED_ARTICLE_QUERY,
+        {}
+      );
+      setArticle(fetchedArticle);
+    } catch (err) {
+      console.log("failed");
+    }
+  }, []);
+  useEffect(() => {
+    fetchArticle();
+  }, [fetchArticle]);
   return (
     <section className="relative h-[85vh] min-h-[600px] overflow-hidden">
       {/* Background Image with Parallax Effect */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
-        style={{ 
-          backgroundImage: `url(${heroImage})`,
-          transform: 'translateZ(0)',
+        style={{
+          backgroundImage: `url(${article?.image ? urlFor(article.image).url() : ""})`,
+          transform: "translateZ(0)",
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent" />
@@ -21,21 +45,20 @@ const Hero = () => {
         <div className="max-w-4xl animate-fade-in-slow">
           <div className="inline-block mb-4 px-4 py-1.5 bg-primary/90 backdrop-blur-sm">
             <span className="text-xs font-sans font-medium tracking-wider uppercase text-primary-foreground">
-              Featured Essay
+              Featured Article
             </span>
           </div>
-          
+
           <h1 className="text-hero md:text-display font-serif font-bold text-paper mb-6 leading-tight">
-            The Harvest Timer: What Coffee Cherries Taught Me About Exit Strategies
+            {article?.title}
           </h1>
-          
+
           <p className="text-xl md:text-2xl font-body text-paper-dark mb-8 max-w-2xl leading-relaxed">
-            Picking too early leaves value on the branch. Waiting too long spoils the returns. 
-            After thirty years, I've learned the signs.
+            {article.excerpt}
           </p>
 
-          <Link 
-            to="/article/harvest-timer"
+          <Link
+            to={`/article/${article?.slug?.current}`}
             className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-gold-light text-primary-foreground font-sans font-medium transition-all duration-300 hover:gap-4 group"
           >
             Read Essay
